@@ -1,0 +1,101 @@
+#!/bin/bash
+# ============================================================================
+# Batocera V43+ 服务：启动 / 停止 EasyTier（无 watchdog 版）
+# 文件名不带 .sh，放 /userdata/system/services/easytier
+#
+# 设计取舍：
+#   不装 watchdog 自愈守护。理由：
+#     1) 旧 watchdog 硬解析 toml 里的 ipv4，DHCP 模式下没有 ipv4 会直接退出，
+#        是发布后最容易踩的坑；
+#     2) EasyTier core 在 Batocera 上本身很稳定，正常场景不需要守护；
+#     3) 少一个常驻进程 = 少一类误判/重启风暴/日志问题。
+#   代价：万一 core 意外退出，需要手动重启服务（系统设置 -> 服务，或
+#         batocera-services restart easytier）。这是可接受的选择。
+#
+# 保留的核心功能：
+#   - 开机自启 / 停止 / 状态查询
+#   - easytier.log 超 10MB 自动轮转，不会写满 SD 卡
+#   - **Minecraft Java 版局域网发现组播修复**（最关键，绝不能丢）：
+#     给 tun0 补 IFF_MULTICAST 标志，并只加一条 224.0.2.60/32 专属路由，
+#     不碰默认路由 / 全局 metric，公网照常可用。
+#     这里在 start() 里等待 tun0 拿 IP 后设置一次。
+# ============================================================================
+ET_DIR="/userdata/system/easytier"
+ET_CORE="$ET_DIR/easytier-core"
+ET_CLI="$ET_DIR/easytier-cli"
+ET_CONF="$ET_DIR/easytier.toml"
+LOG="$ET_DIR/easytier.log"
+ET_DEV="tun0"
+MAX_BYTES=$((10*1024*1024))    # 单个日志上限 10MB，最多保留 1 份 .1 备份
+MC_GROUP="224.0.2.60"          # Minecraft Java 版 LAN 发现组播地址
+
+# MC 组播修复：等 tun0 真正拿到 IP（比只等设备存在更严格），最多 10 秒
+ensure_mc_network() {
+    local i
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        ip -4 -o addr show dev "$ET_DEV" 2>/dev/null | grep -q "inet " && break
+        sleep 1
+    done
+    ip -4 -o addr show dev "$ET_DEV" 2>/dev/null | grep -q "inet " || return 1
+    # IFF_MULTICAST：部分 JDK 据此判断网卡能否组播，缺了 MC 就找不到房间
+    ip link set "$ET_DEV" multicast on 2>/dev/null
+    # 只加 MC 专属 /32 路由，不改 default、不改 metric，公网不受影响
+    ip route replace "$MC_GROUP/32" dev "$ET_DEV" 2>/dev/null
+    echo "[Network] $ET_DEV multicast on; route $MC_GROUP/32 -> $ET_DEV (default route untouched)"
+}
+
+# 日志瘦身：开机启动时先给已有大日志瘦身（copytruncate 保持 inode 不变）
+rotate_now() {
+    [ -f "$LOG" ] || return 0
+    sz=$(stat -c %s "$LOG" 2>/dev/null || echo 0)
+    [ "${sz:-0}" -lt "$MAX_BYTES" ] && return 0
+    if cp -f "$LOG" "$LOG.1" 2>/dev/null; then
+        : > "$LOG"
+        echo "easytier.log rotated (${sz} bytes -> .1)"
+    fi
+}
+
+start() {
+    [ -x "$ET_CORE" ] || chmod +x "$ET_CORE" "$ET_CLI"
+    [ -f "$ET_CONF" ] || { echo "Config not found: $ET_CONF"; return 1; }
+    rotate_now
+    if pgrep -x easytier-core >/dev/null 2>&1; then
+        echo "EasyTier is already running."
+    else
+        nohup "$ET_CORE" -c "$ET_CONF" >> "$LOG" 2>&1 &
+        echo "EasyTier started. Log: $LOG"
+    fi
+    # 服务由 init 后台调用，stdout 在 ES 界面看不到，网络配置写进日志
+    if ensure_mc_network >> "$LOG" 2>&1; then
+        echo "[Network] MC LAN discovery ready" >> "$LOG"
+    else
+        echo "[Network] WARN: $ET_DEV not ready yet, MC discovery may need a service restart" >> "$LOG"
+    fi
+}
+
+stop() {
+    killall easytier-core 2>/dev/null
+    echo "EasyTier stopped."
+}
+
+status() {
+    if pgrep -x easytier-core >/dev/null 2>&1; then
+        echo "EasyTier is running. Virtual IP:"
+        ip -4 -o addr show dev "$ET_DEV" 2>/dev/null | awk '{print $4}'
+    else
+        echo "EasyTier is stopped."
+    fi
+    echo "easytier.log size: $(stat -c %s "$LOG" 2>/dev/null || echo 0) bytes (limit 10MB, backup .1)"
+    mcflag=$(ip link show "$ET_DEV" 2>/dev/null | grep -q MULTICAST && echo on || echo off)
+    mcroute=$(ip route show "$MC_GROUP/32" 2>/dev/null | grep -q "$ET_DEV" && echo active || echo missing)
+    echo "MC LAN discovery: multicast=$mcflag, route=$mcroute ($MC_GROUP -> $ET_DEV)"
+}
+
+case "$1" in
+    start)   start ;;
+    stop)    stop ;;
+    restart) stop; sleep 2; start ;;
+    status)  status ;;
+    *) echo "Usage: $0 {start|stop|restart|status}"; exit 1 ;;
+esac
+exit 0

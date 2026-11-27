@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<gameList>
+	<game>
+		<path>./change_node.sh</path>
+		<name>EasyTier节点检测/更换</name>
+		<desc>检测 easytier.toml 里的公共节点是否失效（支持 tcp / udp）；当 2 个以上失效时，18 秒原地读秒倒计时后自动备份并换成实测可用的国内低延迟节点，再重启 EasyTier 服务。倒计时内按 ESC 取消。</desc>
+		<image>./images/change_node-image.png</image>
+		<marquee>./images/change_node-marquee.png</marquee>
+		<thumbnail>./images/change_node-thumb.png</thumbnail>
+		<playcount>10</playcount>
+		<lastplayed>20261125T014824</lastplayed>
+		<gametime>286</gametime>
+		<lang>cn</lang>
+	</game>
+	<game>
+		<path>./editnode.sh</path>
+		<name>强制修改虚拟局域网节点（慎点）</name>
+		<desc>从 Gitee 人工维护的 uri.txt 读取 3 个节点地址（原样写入，不判断协议），18 秒确认窗口后强制覆盖 easytier.toml 的节点并重启服务；窗口内按 ESC 可取消。改动前自动备份旧文件。所有机子须执行同一份清单，节点一致才能组网。</desc>
+		<image>./images/editnode-image.png</image>
+		<marquee>./images/editnode-marquee.png</marquee>
+		<thumbnail>./images/editnode-thumb.png</thumbnail>
+		<playcount>3</playcount>
+		<lastplayed>20261126T004437</lastplayed>
+		<gametime>121</gametime>
+		<lang>cn</lang>
+	</game>
+</gameList>

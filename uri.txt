@@ -1,0 +1,3 @@
+tcp://easytier.weiai.org.cn:11010
+tcp://225284.xyz:11010
+udp://et.basd1.de:11010

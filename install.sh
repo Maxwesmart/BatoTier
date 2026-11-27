@@ -35,9 +35,10 @@ SVC_DIR="$USERDATA/system/services"
 PORTS_DIR="$USERDATA/roms/ports"
 CONF="$ET_DIR/easytier.toml"
 BTC_CONF="$USERDATA/system/batocera.conf"
-# 节点清单：安装时优先拉本项目 GitHub 仓库的 uri.txt（随发布包一起）；
-# 日常维护仍在 Gitee，取不到时回退 Gitee，再取不到用内置兜底。
+# 节点清单：安装时优先拉本项目 Gitee 仓库的 uri.txt（国内快），再试 GitHub 同名文件；
+# 日常维护仍在 Gitee 老地址，都取不到用内置兜底。两个源内容一致，随便哪个都能用。
 NODE_URLS=(
+    "https://gitee.com/lhw9527/BatoTier/raw/main/uri.txt"
     "https://raw.githubusercontent.com/Maxwesmart/BatoTier/main/uri.txt"
     "https://gitee.com/lhw9527/easytiernode/raw/master/uri.txt"
 )
@@ -139,7 +140,7 @@ if [ -s "$ET_CACHE/$ET_ZIP" ]; then
 fi
 if [ "$DL_OK" -ne 1 ]; then
 for BASE in "${DL_URLS[@]}"; do
-    URL="$BASE/$ET_ZIP"
+    URL="$BASE"   # DL_URLS 里已是完整地址（含文件名），不要再拼 $ET_ZIP
     echo "        尝试下载源: $BASE"
     rm -f "$ET_TMP/$ET_ZIP"
     curl -sS -L -m 120 -o "$ET_TMP/$ET_ZIP" "$URL" 2>/dev/null

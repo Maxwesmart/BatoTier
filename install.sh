@@ -43,7 +43,8 @@ NODE_URLS=(
     "https://gitee.com/lhw9527/easytiernode/raw/master/uri.txt"
 )
 # EasyTier 官方 releases API —— 自动识别最新 Pre-release，不写死版本号
-ET_RELEASES_API="https://api.github.com/repos/EasyTier/EasyTier/releases?per_page=10"
+ET_RELEASES_API="https://api.github.com/repos/EasyTier/EasyTier/releases?per_page=3"
+ET_RELEASES_MIRROR="https://gh-proxy.com/https://api.github.com/repos/EasyTier/EasyTier/releases?per_page=3"
 WIZARD_WAIT="${EDITNODE_WIZARD_WAIT:-100}"   # 配置向导超时秒数，超时用默认值
 ET_TMP="/tmp/easytier_dl_$$"
 ET_CACHE="/userdata/system/.cache/easytier"   # 校验通过的官方包缓存，重装/多台机子复用
@@ -91,7 +92,12 @@ echo "  [1/9] 架构检查通过：$ARCH -> 官方包 $ET_ARCH"
 mkdir -p "$ET_TMP" || die "创建临时目录失败"
 echo "  正在查询 EasyTier 官方最新 Pre-release ..."
 # 先把 API 结果存文件（heredoc 会占用 stdin，不能让 python3 - 直接读管道）
-curl -sS -L -m 20 "$ET_RELEASES_API" -o "$ET_TMP/releases.json" 2>/dev/null
+# 加 --compressed：API 原始 JSON 约 400~800KB，gzip 后仅 40KB 左右，慢网也能秒下
+curl -sS --compressed -L -m 45 "$ET_RELEASES_API" -o "$ET_TMP/releases.json" 2>/dev/null
+if ! python3 -c 'import json,sys; json.load(open(sys.argv[1],encoding="utf-8"))' "$ET_TMP/releases.json" 2>/dev/null; then
+    echo "        GitHub API 直连失败/超时，尝试 gh-proxy 镜像 ..."
+    curl -sS --compressed -L -m 45 "$ET_RELEASES_MIRROR" -o "$ET_TMP/releases.json" 2>/dev/null
+fi
 cat > "$ET_TMP/pick.py" <<'PYEOF'
 import sys, json
 arch = sys.argv[2]
@@ -143,12 +149,14 @@ for BASE in "${DL_URLS[@]}"; do
     URL="$BASE"   # DL_URLS 里已是完整地址（含文件名），不要再拼 $ET_ZIP
     echo "        尝试下载源: $BASE"
     rm -f "$ET_TMP/$ET_ZIP"
-    curl -sS -L -m 120 -o "$ET_TMP/$ET_ZIP" "$URL" 2>/dev/null
-    # 断点续传补 8 轮（官方慢/中断时继续）
-    for try in 1 2 3 4 5 6 7 8; do
+    echo "        （下载 31MB，慢网可能要几分钟，进度见下方）"
+    curl -L -m 180 -o "$ET_TMP/$ET_ZIP" "$URL" 2>/dev/null
+    # 断点续传补 20 轮 x 120s（慢网 14KB/s 也能累计下满 31MB）
+    for try in $(seq 1 20); do
         GOT=$(stat -c %s "$ET_TMP/$ET_ZIP" 2>/dev/null || echo 0)
-        [ "$GOT" -gt 24000000 ] && break
-        curl -sS -L -C - -m 90 -o "$ET_TMP/$ET_ZIP" "$URL" 2>/dev/null || true
+        [ "$GOT" -gt 31108806 ] && break
+        echo "        续传第 $try 轮，已收到 $((GOT/1048576)) MB ..."
+        curl -sS -L -C - -m 120 -o "$ET_TMP/$ET_ZIP" "$URL" 2>/dev/null || true
     done
     GOT_SHA=$(sha256sum "$ET_TMP/$ET_ZIP" 2>/dev/null | awk '{print $1}')
     if [ "$GOT_SHA" = "$EXPECT_SHA" ]; then

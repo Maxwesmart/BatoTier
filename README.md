@@ -103,7 +103,7 @@ chmod +x install.sh
 网络密码 network_secret: xxxxxxxx
 ```
 
-**所有机子这两项必须完全一致**，否则互相看不到，注意此处==BatoceraMC==和密码==xxxxxxxx==是举例，实际安装时请填入自己设置的值，这些值只能你自己和需要一起联机的伙伴知道且对方机子设置跟你一样。
+**所有机子这两项必须完全一致**，否则互相看不到，注意此处“BatoceraMC”和密码“xxxxxxxx”是举例，实际安装时请填入自己设置的值，这些值只能你自己和需要一起联机的伙伴知道且对方机子设置跟你一样。
 
 配置向导在 SSH 终端里显示（不会弹到 ES 界面），有 **100 秒输入时间**：
 
@@ -217,9 +217,6 @@ A：一般不用，DHCP 会重新分配 IP。换网络后如果长时间不通�
 **Q：我想给某台机子固定 IP，怎么做？**
 A：用发布包里的 `easytier.toml.ipv4`：把 `dhcp = false` 和 `ipv4 = "10.126.126.x/24"` 复制进本机 `easytier.toml`（或直接改名取代），末位别和别人重复、网段保持一致，然后 `batocera-services restart easytier`。
 
-**Q：为什么没有 watchdog 自愈了？**
-A：这是有意去掉的。旧版 watchdog 硬解析 toml 里的 `ipv4`，而 DHCP 模式没有这个字段，会导致守护进程直接退出——这是发布后最容易踩的坑。EasyTier core 本身在 Batocera 上很稳定，不需要常驻守护；少一个进程也避免误判重启和日志问题。万一 core 意外退出，手动 `batocera-services restart easytier` 即可。
-
 **Q：两个工具的倒计时怎么取消？**
 A：`change_node.sh` 18 秒窗口、`editnode.sh` 15 秒窗口内按 **ESC** 即可，取消后不停止服务、不备份、不修改任何文件。
 
@@ -229,7 +226,7 @@ A：`change_node.sh` 18 秒窗口、`editnode.sh` 15 秒窗口内按 **ESC** 即
 
 - EasyTier：https://github.com/EasyTier/EasyTier（Apache-2.0）
 - Batocera：https://batocera.org/
-- 本项目的脚本与文档：MIT（草稿，待确认）
+- 本项目的脚本与文档：AI辅助编写
 
 > 本项目是个人使用经验整理，不隶属于 EasyTier 或 Batocera 官方。
 > 公共节点由社区维护，不保证长期可用；请勿用于任何违法用途。

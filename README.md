@@ -206,14 +206,29 @@ A：一般不用，DHCP 会重新分配 IP。换网络后如果长时间不通�
 **Q：我想给某台机子固定 IP，怎么做？**
 A：用发布包里的 `easytier.toml.ipv4`：把 `dhcp = false` 和 `ipv4 = "10.126.126.x/24"` 复制进本机 `easytier.toml`（或直接改名取代），末位别和别人重复、网段保持一致，然后 `batocera-services restart easytier`。
 
+**Q：如何修改主机名、网络名、密码、节点这些eastier组网的配置信息**
+A：Batocera系统的easytier配置信息都在/userdata/system/services/easytier/easytier.toml文件里，Batocera系统下按F1,进入Share/system/services/easytier/就能看到，双击打开即可编辑。编辑完要生效必须重启easytier服务，不懂如何重启服务的小伙伴直接重启batocera系统即可。
+
+**Q：如何判断虚拟局域网是否联通？**
+A：easytier有各个系统的版本，可以安装windows版或者Android版带GUI界面，可以看到虚拟局域网的各个机子情况。
+
+**Q：节点都失效了怎么办？哪里可以找到？**
+首先明确easytier组网的必要条件有四个：网络名、密码一致，网段一致（就是ipv4前4位都一样比如10.126.126.）、必须有一个有效的地址和端口一致的节点比如：tcp://225284.xyz:11010，这四个条件缺一不可。
+
+前三者都是可以任意编辑的，只有节点不能随便填，必须填有效的公共节点或者自建节点的地址和端口，而节点失效了要修改节点有三种方式：
+一、ES界面进入Ports平台，执行里面的“EasyTier节点检测/更换”，全程不用任何按键自动帮你找到有效节点。这种方式的风险在于找到的有效节点不一定和你的联机小伙伴的batocera上配置的一样，就可能导致组虚拟局域网失败。
+二、也可以执行Ports下强制修改虚拟局域网节点（慎点），会把节点修改为https://gitee.com/lhw9527/easytiernode/raw/master/uri.txt里的一样，这里的节点看作者更新是否有效。只要各个联网的机子都执行过这个，就能保证各台机子的节点设置一点是一致的。
+三、自建有效节点或者自行去网上找有效的公共节点，比如可以去https://ruixuan.online/uptime/easytier此页面复制有效的节点，人工编辑进/userdata/system/services/easytier/easytier.toml文件里，然后重启batocera即可。
+
 **Q：两个工具的倒计时怎么取消？**
+
 A：`change_node.sh` 18 秒窗口、`editnode.sh` 15 秒窗口内按 **ESC** 即可，取消后不停止服务、不备份、不修改任何文件。
 
 ---
 
 ## 许可与鸣谢
 
-- EasyTier：https://github.com/EasyTier/EasyTier（Apache-2.0）
+- EasyTier：https://github.com/EasyTier/EasyTier or https://www.easytier.cn/
 - Batocera：https://batocera.org/
 - 本项目的脚本与文档：AI辅助编写
 

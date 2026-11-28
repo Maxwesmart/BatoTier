@@ -195,18 +195,23 @@ batocera-services restart easytier
 ## 常见问题
 
 **Q：装完 Java 版 MC 多人列表还是看不到房间？**
+
 A：确认 easytier 服务在运行（`系统设置 -> 服务`），并且所有机子网络名/密码一致。服务脚本在启动时等待 `tun0` 拿到 IP 后会自动补 `IFF_MULTICAST` 标志和 `224.0.2.60/32` 专属路由。用 `/userdata/system/services/easytier status` 看 `MC LAN discovery` 是否为 `multicast=on, route=active`。如果服务启动瞬间 `tun0` 还没起来，重启一次服务即可（`batocera-services restart easytier`）。
 
 **Q：能不能直接改全局网卡 Metric 来解决发现不了房间？**
+
 A：**不建议**。那会影响公网路由，可能导致主机连不上外网。本方案只加 MC 组播的专属 /32 路由，不碰默认路由和 metric。如果其他局域网没装easytier的机子想要局域网联机，要不已经装的机子关掉easytier服务，要不美妆的机子都装一下且设置一样的节点地址和网络名、网络密码。easytier有Linux版，windows版，安卓版。地址见页面底部GitHub地址。
 
 **Q：换 WiFi 后要不要禁用服务？**
+
 A：一般不用，DHCP 会重新分配 IP。换网络后如果长时间不通，先停服务再换、换完再启动（`batocera-services restart easytier`）。
 
 **Q：我想给某台机子固定 IP，怎么做？**
+
 A：用发布包里的 `easytier.toml.ipv4`：把 `dhcp = false` 和 `ipv4 = "10.126.126.x/24"` 复制进本机 `easytier.toml`（或直接改名取代），末位别和别人重复、网段保持一致，然后 `batocera-services restart easytier`。
 
 **Q：如何修改主机名、网络名、密码、节点这些eastier组网的配置信息**
+
 A：Batocera系统的easytier配置信息都在/userdata/system/services/easytier/easytier.toml文件里，Batocera系统下按F1,进入Share/system/services/easytier/就能看到，双击打开即可编辑。编辑完要生效必须重启easytier服务，不懂如何重启服务的小伙伴直接重启batocera系统即可。
 
 **Q：如何判断虚拟局域网是否联通？**

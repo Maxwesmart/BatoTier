@@ -11,7 +11,7 @@ udp_whitelist = []
 
 [network_identity]
 network_name = "BatoceraMC"
-network_secret = "2026easytier"
+network_secret = "xxxxxxxx"
 
 [[peer]]
 uri = "tcp://easytier.weiai.org.cn:11010"

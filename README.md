@@ -210,6 +210,7 @@ A：用发布包里的 `easytier.toml.ipv4`：把 `dhcp = false` 和 `ipv4 = "10
 A：Batocera系统的easytier配置信息都在/userdata/system/services/easytier/easytier.toml文件里，Batocera系统下按F1,进入Share/system/services/easytier/就能看到，双击打开即可编辑。编辑完要生效必须重启easytier服务，不懂如何重启服务的小伙伴直接重启batocera系统即可。
 
 **Q：如何判断虚拟局域网是否联通？**
+
 A：easytier有各个系统的版本，可以安装windows版或者Android版带GUI界面，可以看到虚拟局域网的各个机子情况。
 
 **Q：节点都失效了怎么办？哪里可以找到？**
